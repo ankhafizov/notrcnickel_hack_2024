@@ -152,7 +152,7 @@ def main():
                 frame_element = inference_AI(file_saved_path)
                 draw_results_for_frame(frame_element)
                 frame_elements.append(frame_element)
-            form_table = st.form_submit_button(":green[Сформировать таблицу]")
+            form_table = st.form_submit_button(":green[Анализировать статистику]")
             if form_table:
                 st.session_state["form_table"] = True
 
