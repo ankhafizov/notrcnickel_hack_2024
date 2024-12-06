@@ -1,0 +1,15 @@
+opencv-python
+PyMuPDF
+hydra-core
+streamlit
+streamlit-image-zoom
+patched_yolo_infer
+pytesseract
+openpyxl
+fuzzywuzzy
+dill
+paddlepaddle
+paddleocr
+python-Levenshtein
+transliterate
+sahi

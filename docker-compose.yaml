@@ -1,0 +1,7 @@
+services:
+  nornickel_hack:
+    build: .
+    restart: always
+    ports:
+      - "8888:8888"
+    container_name: nornickel_hack
