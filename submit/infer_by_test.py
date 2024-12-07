@@ -12,7 +12,7 @@ model_path = "./segmentation.pt"
 
 segment_model = YOLO(model_path)
 segment_model_img_size = 448
-segment_model_conf = 0.75
+segment_model_conf = 0.6
 segment_model.to("cpu")
 
 classifier_model = YOLO(classifier_model_path)
