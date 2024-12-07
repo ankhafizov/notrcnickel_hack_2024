@@ -36,7 +36,7 @@ def set_page_static_info():
         layout="wide",
         initial_sidebar_state="expanded",
     )
-    st.title("Норникель-хаккатон. Кейс 'грязные дела'")
+    st.title("Норникель-хакатон. DeepSearchers. AntiGryaz")
 
 
 def upload_files():
