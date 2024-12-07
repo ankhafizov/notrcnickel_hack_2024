@@ -82,7 +82,6 @@ class AIHelper:
         return mask
 
     def _get_mask_drawn_over_image(self, img, mask, alpha=0.4):
-        print(mask.shape)
         h, w = mask.shape
         red_overlay = np.zeros((h, w, 3), dtype=np.uint8)
         red_overlay[:, :, 0] = (mask > 0).astype(np.uint8) * 255
