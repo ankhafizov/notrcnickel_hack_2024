@@ -61,14 +61,17 @@ class AIHelper:
         return cls
 
     def _infer_yolo_segmenter(self, img):
+        height, width = img.shape[:2]
         result = self.segmentation_model.predict(
             img, imgsz=self.segmentation_config["imgsz"], verbose=False
         )[0]
-        mask = result.masks.data.cpu().numpy()[0]
-        mask = cv2.resize(mask, result.masks.orig_shape[::-1])
-        _, mask = cv2.threshold(
-            mask, self.segmentation_config["bin_thresh"], 255, cv2.THRESH_BINARY
-        )
+        mask = np.zeros((height, width), dtype=np.uint8)
+
+        masks = result.masks
+        if masks is not None:
+            for mask_array in masks.data.cpu().numpy():
+                mask_array = cv2.resize(mask_array, (width, height), interpolation=cv2.INTER_LINEAR)
+                mask[mask_array > 0] = 255
 
         return mask
 
