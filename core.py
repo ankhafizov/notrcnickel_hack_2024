@@ -27,6 +27,7 @@ class AIHelper:
             mask = np.ones((img_h, img_w))
         else:
             mask = self._infer_yolo_segmenter(img)
+            mask = self._mask_postprocessing(mask)
 
         dirty_degree = round((mask > 0).sum() / mask.size, 2)
         characteristics = pd.DataFrame(
@@ -42,8 +43,8 @@ class AIHelper:
             if dirty_degree > 0
             else self.common_config["clean_label"]
         )
-        print(cls)
-        mask_over_img = self._get_image_with_mask(img, mask)
+
+        mask_over_img = self._get_mask_drawn_over_image(img, mask)
 
         frame_element = FrameElement(
             img, mask, mask_over_img, basename(img_path), cls, characteristics
@@ -60,20 +61,27 @@ class AIHelper:
         cls = result.names[probs.argmax()]
         return cls
 
+    def _mask_postprocessing(self, mask, kernel_size=15):
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        return mask
+
     def _infer_yolo_segmenter(self, img):
+        height, width = img.shape[:2]
         result = self.segmentation_model.predict(
             img, imgsz=self.segmentation_config["imgsz"], verbose=False
         )[0]
-        mask = result.masks.data.cpu().numpy()[0]
-        mask = cv2.resize(mask, result.masks.orig_shape[::-1])
-        _, mask = cv2.threshold(
-            mask, self.segmentation_config["bin_thresh"], 255, cv2.THRESH_BINARY
-        )
+        mask = np.zeros((height, width), dtype=np.uint8)
+
+        masks = result.masks
+        if masks is not None:
+            for mask_array in masks.data.cpu().numpy():
+                mask_array = cv2.resize(mask_array, (width, height), interpolation=cv2.INTER_LINEAR)
+                mask[mask_array > 0] = 255
 
         return mask
 
-    def _get_image_with_mask(self, img, mask, alpha=0.4):
-        print(mask.shape)
+    def _get_mask_drawn_over_image(self, img, mask, alpha=0.4):
         h, w = mask.shape
         red_overlay = np.zeros((h, w, 3), dtype=np.uint8)
         red_overlay[:, :, 0] = (mask > 0).astype(np.uint8) * 255

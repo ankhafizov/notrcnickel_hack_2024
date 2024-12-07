@@ -130,7 +130,7 @@ def main():
     # 1. Подгрузка
     if file_saved_paths:
         with st.form("Processing"):
-            submitted = st.form_submit_button(":green[Получить результаты]")
+            submitted = st.form_submit_button(":green[Получить статистику]")
             if submitted:
                 st.session_state["show_result_btn_pressed"] = True
     else:

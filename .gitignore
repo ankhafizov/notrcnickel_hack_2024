@@ -1,3 +1,6 @@
 data_from_orgs
 __pycache__
 temp
+*.zip
+research/train_segmentator/dataset
+research/train_classification/classification_dataset

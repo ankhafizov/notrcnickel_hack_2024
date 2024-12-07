@@ -3,10 +3,10 @@ common:
   clean_label: камера чистая
 
 classification:
-  weights: models/best_cls.pt
+  weights: submit/classifier.pt
   imgsz: 640
 
 segmentation:
-  weights: models/best_segm.pt
+  weights: submit/segmentation.pt
   imgsz: 224
   bin_thresh: 0.4
