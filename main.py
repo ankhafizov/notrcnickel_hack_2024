@@ -9,17 +9,24 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import numbers
+import yaml
 
+from core import AIHelper
+
+
+with open("config.yaml", encoding="utf-8") as stream:
+    CONFIG = yaml.safe_load(stream)
 
 TEMP_FOLDER_PTH = "temp"
 ZOOM_FACTOR = 3
 
-CLEAN_LABEL = "камера чистая"
-DIRTY_LABEL = "камера грязная"
-CHARATERISTICS_LABEL = "Характеристика"
-CHARATERISTICS_VALUE_LABEL = "Значение"
+CLEAN_LABEL = CONFIG["common"]["clean_label"]
+DIRTY_LABEL = CONFIG["common"]["dirty_label"]
+
 PREDICTION_GOOD = "Правильно"
 PREDICTION_BAD = "Ошибка"
+
+ai_helper = AIHelper(CONFIG)
 
 
 def set_page_static_info():
@@ -56,39 +63,27 @@ def upload_files():
 
 def inference_AI(img_path: str):
     with st.spinner("Запрос обрабатывается, ждите..."):
-        thresh = 0.5
-        img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
-        mask = np.zeros_like(img)
-
-        dirty_degree = round(mask.sum() / mask.size, 2)
-        characteristics = pd.DataFrame(
-            [
-                ["Загрязненность, %", dirty_degree],
-                ["Площадь маски, Мп", round(img.size / 1_000_000, 2)],
-            ],
-            columns=[CHARATERISTICS_LABEL, CHARATERISTICS_VALUE_LABEL],
-        )
-        cls = DIRTY_LABEL if dirty_degree > thresh else CLEAN_LABEL
-        frame_element = FrameElement(img, mask, basename(img_path), cls, characteristics)
+        frame_element = ai_helper.predict(img_path)
 
     return frame_element
 
 
 def show_row_images(frame_element: FrameElement, img_size=500):
     img = frame_element.image
-    mask = frame_element.mask  # TODO - править
+    mask = frame_element.mask_over_img
 
     col_first, col_second = st.columns(2)
     with col_first:
         st.write("Исходное фото:")
         image_zoom(img, "both", img_size, True, True, ZOOM_FACTOR)
     with col_second:
-        st.write("Маска загрязнений")
+        st.write("Маска загрязнений (отмечена красным):")
         image_zoom(mask, "both", img_size, True, True, ZOOM_FACTOR)
 
 
 def draw_results_for_frame(frame_element: FrameElement):
     color = "green" if frame_element.cls == CLEAN_LABEL else "red"
+    print("frame_element.cls", frame_element.cls, "CLEAN_LABEL", CLEAN_LABEL, color)
     st.markdown(f"### {frame_element.filename} - :{color}[{frame_element.cls}]")
 
     show_row_images(frame_element)
@@ -118,8 +113,8 @@ def get_stats_table(frame_elements: list[FrameElement]):
 
         frame_characteristics = frame_element.characteristics
         for _, frame_characteristic in frame_characteristics.iterrows():
-            key = frame_characteristic[CHARATERISTICS_LABEL]
-            value = frame_characteristic[CHARATERISTICS_VALUE_LABEL]
+            key = frame_characteristic["Характеристика"]
+            value = frame_characteristic["Значение"]
             if key not in df_stats:
                 df_stats[key] = []
 
