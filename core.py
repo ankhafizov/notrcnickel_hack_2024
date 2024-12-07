@@ -27,6 +27,7 @@ class AIHelper:
             mask = np.ones((img_h, img_w))
         else:
             mask = self._infer_yolo_segmenter(img)
+            mask = self._mask_postprocessing(mask)
 
         dirty_degree = round((mask > 0).sum() / mask.size, 2)
         characteristics = pd.DataFrame(
@@ -42,8 +43,8 @@ class AIHelper:
             if dirty_degree > 0
             else self.common_config["clean_label"]
         )
-        print(cls)
-        mask_over_img = self._get_image_with_mask(img, mask)
+
+        mask_over_img = self._get_mask_drawn_over_image(img, mask)
 
         frame_element = FrameElement(
             img, mask, mask_over_img, basename(img_path), cls, characteristics
@@ -60,6 +61,11 @@ class AIHelper:
         cls = result.names[probs.argmax()]
         return cls
 
+    def _mask_postprocessing(self, mask, kernel_size=15):
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        return mask
+
     def _infer_yolo_segmenter(self, img):
         height, width = img.shape[:2]
         result = self.segmentation_model.predict(
@@ -75,7 +81,7 @@ class AIHelper:
 
         return mask
 
-    def _get_image_with_mask(self, img, mask, alpha=0.4):
+    def _get_mask_drawn_over_image(self, img, mask, alpha=0.4):
         print(mask.shape)
         h, w = mask.shape
         red_overlay = np.zeros((h, w, 3), dtype=np.uint8)
