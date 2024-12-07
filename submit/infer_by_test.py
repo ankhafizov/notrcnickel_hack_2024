@@ -11,7 +11,8 @@ classifier_model_path = "./classifier.pt"
 model_path = "./segmentation.pt"
 
 segment_model = YOLO(model_path)
-segment_model_img_size = 640
+segment_model_img_size = 448
+segment_model_conf = 0.75
 segment_model.to("cpu")
 
 classifier_model = YOLO(classifier_model_path)
@@ -22,7 +23,9 @@ classifier_model.to("cpu")
 def infer_segmentation(image_path):
     image = cv2.imread(image_path)
     height, width = image.shape[:2]
-    result = segment_model.predict(image, imgsz=segment_model_img_size, verbose=False)[0]
+    result = segment_model.predict(
+        image, imgsz=segment_model_img_size, verbose=False, conf=segment_model_conf
+    )[0]
     mask = np.zeros((height, width), dtype=np.uint8)
 
     masks = result.masks
@@ -58,13 +61,14 @@ for image_name in os.listdir(dataset_path):
         img_path = os.path.join(dataset_path, image_name)
         cls = infer_classifier(img_path)
         if cls == "suspected":
-            mask = infer_segmentation(img_path)
+            bin_mask = infer_segmentation(img_path)
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
+            opened = cv2.morphologyEx(bin_mask, cv2.MORPH_OPEN, kernel)
+            mask = opened
         elif cls == "clean":
             mask = create_full_mask(img_path, False)
         elif cls == "dirty":
             mask = create_full_mask(img_path, True)
-
-        cv2.imwrite(f"{os.path.splitext(image_name)[0]}_mask.png", mask)
 
         _, encoded_img = cv2.imencode(".png", mask)
 
