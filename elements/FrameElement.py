@@ -7,6 +7,7 @@ import pandas as pd
 class FrameElement:
     image: np.ndarray
     mask: np.ndarray
+    mask_over_img: np.ndarray
     filename: str
     cls: str
     characteristics: pd.DataFrame
