@@ -29,10 +29,10 @@ class AIHelper:
             mask = self._infer_yolo_segmenter(img)
             mask = self._mask_postprocessing(mask)
 
-        dirty_degree = round((mask > 0).sum() / mask.size, 2)
+        dirty_degree = (mask > 0).sum() / mask.size
         characteristics = pd.DataFrame(
             [
-                ["Загрязненность, %", dirty_degree],
+                ["Загрязненность, %", round(dirty_degree * 100, 2)],
                 ["Площадь маски, Мп", round(img.size / 1_000_000, 2)],
             ],
             columns=["Характеристика", "Значение"],
@@ -63,6 +63,7 @@ class AIHelper:
 
     def _mask_postprocessing(self, mask, kernel_size=15):
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
+        # mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         return mask
 
